@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UP Police Matrix | Admin Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #050505;
+            --card-bg: #111111;
+            --accent-primary: #8b5cf6;
+            --accent-secondary: #d946ef;
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
+            --border-color: #262626;
+            --success: #10b981;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container { max-width: 1000px; margin: 0 auto; }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+        }
+
+        header h1 {
+            font-size: 2rem;
+            background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .switch-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: var(--card-bg);
+            padding: 0.75rem 1.5rem;
+            border-radius: 2rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+
+        .switch input { opacity: 0; width: 0; height: 0; }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #333;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px; width: 18px;
+            left: 4px; bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider { background-color: var(--accent-primary); }
+        input:checked + .slider:before { transform: translateX(24px); }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover { transform: translateY(-5px); border-color: var(--accent-primary); }
+
+        .stat-header { display: flex; justify-content: space-between; margin-bottom: 1rem; }
+        .stat-name { font-weight: 700; color: var(--text-main); text-transform: uppercase; font-size: 0.9rem; }
+        .stat-percent { color: var(--success); font-weight: 700; font-size: 0.9rem; }
+
+        .progress-bar {
+            height: 8px;
+            background: #222;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary));
+            width: 0%;
+            transition: width 1s ease-in-out;
+        }
+
+        .stat-footer { font-size: 0.8rem; color: var(--text-muted); display: flex; justify-content: space-between; }
+
+        .priority-section {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 1.5rem;
+            padding: 2rem;
+        }
+
+        .priority-section h2 { margin-bottom: 1.5rem; font-size: 1.2rem; }
+
+        .priority-list { list-style: none; }
+
+        .priority-item {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border-color);
+            margin-bottom: 0.75rem;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: opacity 0.3s;
+        }
+        
+        .priority-item.disabled { opacity: 0.4; }
+
+        .source-name-container { display: flex; align-items: center; gap: 1rem; }
+
+        .priority-item:hover { background: rgba(255,255,255,0.05); }
+
+        .save-btn {
+            display: block;
+            width: 100%;
+            margin-top: 2rem;
+            background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .save-btn:hover { opacity: 0.9; }
+
+        #toast {
+            position: fixed;
+            bottom: 2rem; right: 2rem;
+            background: var(--accent-primary);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 1rem;
+            display: none;
+            animation: fadeInUp 0.3s;
+            z-index: 1000;
+        }
+
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Admin Dashboard</h1>
+        <div class="switch-container">
+            <span id="statusLabel">Ingestion Paused</span>
+            <label class="switch">
+                <input type="checkbox" id="ingestionToggle">
+                <span class="slider"></span>
+            </label>
+        </div>
+    </header>
+
+    <div class="stats-grid" id="statsGrid"></div>
+
+    <div class="priority-section">
+        <h2>Source Synchronization Priorities</h2>
+        <p style="color: var(--text-muted); margin-bottom: 1rem; font-size: 0.9rem;">
+            Check to enable ingestion. Order below determines processing priority.
+        </p>
+        <ul id="priorityList" class="priority-list"></ul>
+    </div>
+</div>
+
+<div id="toast">Changes saved!</div>
+
+<script>
+    let currentConfig = { ingestion_enabled: false, source_config: [] };
+    let isReordering = false;
+
+    async function fetchStatus() {
+        if (isReordering) return; // Don't refresh UI while user is clicking reorder
+        try {
+            const res = await fetch('/api/admin/status');
+            const data = await res.json();
+            
+            currentConfig = data.config;
+            renderStats(data.stats);
+            renderPriorities(data.config.source_config);
+            
+            document.getElementById('ingestionToggle').checked = currentConfig.ingestion_enabled;
+            document.getElementById('statusLabel').innerText = currentConfig.ingestion_enabled ? 'Ingestion Running' : 'Ingestion Paused';
+        } catch (e) { console.error(e); }
+    }
+
+    function renderStats(stats) {
+        const grid = document.getElementById('statsGrid');
+        grid.innerHTML = '';
+        stats.forEach(s => {
+            const percent = s.total > 0 ? Math.round((s.ingested / s.total) * 100) : 0;
+            const card = document.createElement('div');
+            card.className = 'stat-card';
+            card.innerHTML = `
+                <div class="stat-header">
+                    <span class="stat-name">${s.source}</span>
+                    <span class="stat-percent">${percent}%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${percent}%"></div>
+                </div>
+                <div class="stat-footer">
+                    <span>Synced: ${s.ingested}</span>
+                    <span>Total: ${s.total}</span>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
+    function renderPriorities(sources) {
+        const list = document.getElementById('priorityList');
+        list.innerHTML = '';
+        sources.forEach((source, index) => {
+            const li = document.createElement('li');
+            li.className = `priority-item ${source.enabled ? '' : 'disabled'}`;
+            li.innerHTML = `
+                <div class="source-name-container">
+                    <input type="checkbox" ${source.enabled ? 'checked' : ''} onchange="toggleSource(${index}, this.checked)">
+                    <span>#${index + 1} - ${source.name}</span>
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button onclick="moveUp(${index})" style="background:none; border:none; color:white; cursor:pointer; font-size:1.2rem;">↑</button>
+                    <button onclick="moveDown(${index})" style="background:none; border:none; color:white; cursor:pointer; font-size:1.2rem;">↓</button>
+                </div>
+            `;
+            list.appendChild(li);
+        });
+    }
+
+    async function toggleSource(index, enabled) {
+        currentConfig.source_config[index].enabled = enabled;
+        await saveConfig();
+    }
+
+    async function moveUp(index) {
+        if (index === 0) return;
+        isReordering = true;
+        const arr = currentConfig.source_config;
+        [arr[index], arr[index - 1]] = [arr[index - 1], arr[index]];
+        renderPriorities(arr);
+        await saveConfig();
+        isReordering = false;
+    }
+
+    async function moveDown(index) {
+        const arr = currentConfig.source_config;
+        if (index === arr.length - 1) return;
+        isReordering = true;
+        [arr[index], arr[index + 1]] = [arr[index + 1], arr[index]];
+        renderPriorities(arr);
+        await saveConfig();
+        isReordering = false;
+    }
+
+    async function saveConfig() {
+        const enabled = document.getElementById('ingestionToggle').checked;
+        const body = {
+            ingestion_enabled: enabled,
+            source_config: currentConfig.source_config
+        };
+        
+        await fetch('/api/admin/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        
+        showToast();
+    }
+
+    function showToast() {
+        const t = document.getElementById('toast');
+        t.style.display = 'block';
+        setTimeout(() => t.style.display = 'none', 3000);
+    }
+
+    document.getElementById('ingestionToggle').addEventListener('change', async (e) => {
+        document.getElementById('statusLabel').innerText = e.target.checked ? 'Ingestion Running' : 'Ingestion Paused';
+        await saveConfig();
+    });
+
+    setInterval(fetchStatus, 3000);
+    fetchStatus();
+</script>
+
+</body>
+</html>

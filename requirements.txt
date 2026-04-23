@@ -1,0 +1,9 @@
+fastapi==0.115.0
+uvicorn==0.30.6
+pymysql==1.1.1
+python-dotenv==1.0.1
+chromadb==0.5.5
+sentence-transformers==3.1.1
+huggingface_hub==0.29.2
+pydantic==2.8.2
+tqdm==4.66.5

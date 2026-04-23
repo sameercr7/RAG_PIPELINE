@@ -1,0 +1,29 @@
+{
+    "ingestion_enabled": true,
+    "source_config": [
+        {
+            "name": "TWITTER",
+            "enabled": false
+        },
+        {
+            "name": "INSTAGRAM",
+            "enabled": true
+        },
+        {
+            "name": "YOUTUBE",
+            "enabled": true
+        },
+        {
+            "name": "WHATSAPP",
+            "enabled": true
+        },
+        {
+            "name": "NEWS_RSS_FEED",
+            "enabled": false
+        },
+        {
+            "name": "FACEBOOK",
+            "enabled": false
+        }
+    ]
+}
